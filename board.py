@@ -26,22 +26,43 @@ class Board:
         else:
             return self.pockets[self.storeB_idx]
 
-    def move(self, pocket: int, player: str = "A"):
-        if pocket <= 0 or pocket > self.side_size:
-            raise ValueError("Invalid pocket number. Must be between 1 and side_size.")
+    def _valid_pocket(self, pocket: int, player: str) -> bool:
+        """
+        Checks that pocket selection by a player is valid. If one invalid condition
+        is met, then the move is considered invalid
 
-        # Adjust index for player B
-        start_index = pocket if player == "A" else pocket + self.side_size + 1
+        Args:
+          - pocket (int): pocket selection
+          - player (str): player making the move
 
-        # Check if the pocket belongs to the player and contains beads
-        if (
-            self.pockets[start_index] == 0
-            or (player == "B" and start_index < self.side_size)
-            or (player == "A" and start_index >= self.side_size + 1)
-        ):
-            raise ValueError(
-                "Invalid move. Pocket is empty or does not belong to the player."
-            )
+        Returns:
+          - bool: True iff move is valid (i.e) o right side, has beads, and not out of bounds
+        """
+        invalid_conditions = (
+            (player == "B" and 0 < pocket <= self.side_size)
+            or (player == "A" and (self.side_size + 1 < pocket < len(self.pockets)))
+            or pocket == self.storeA_idx
+            or pocket == self.storeB_idx
+            or pocket >= len(self.pockets)
+            or self.pockets[pocket] == 0
+        )
+
+        if invalid_conditions:
+            return False
+        else:
+            return True
+
+    def _distribute_beads(self, start_index: int, player: str):
+        """
+        Distribute beads according Mancala rules. Drops beans in a circular fashion.
+        If player goes over their own store or a pocket, drop a bead in and proceed
+        to the next pocket. Otherwise (when over other players store), skip and
+        continue until beads are exhausted.
+
+        Args:
+          - start_index (int): Index where beads were taken from
+          - player (str): Player making the move
+        """
 
         # Distribute beads
         beads = self.pockets[start_index]
@@ -58,23 +79,36 @@ class Board:
                 self.pockets[current_index] += 1
                 beads -= 1
 
-        # Check for additional turn
-        extra_turn = (player == "A" and current_index == self.storeA_idx) or (
-            player == "B" and current_index == self.storeB_idx
-        )
+        return current_index
 
+    def move(self, pocket: int, player: str = "A"):
+        # Adjust index for player B
+        start_index = pocket if player == "A" else pocket + self.side_size + 1
+
+        # Check if the pocket belongs to the player and contains beads
+        if not self._valid_pocket(start_index, player):
+            raise ValueError(
+                "Invalid move. Pocket is empty or does not belong to the player."
+            )
+
+        # Distribute beads
+        final_pocket = self._distribute_beads(start_index, player)
+
+        # Check for additional turn
+        extra_turn = (player == "A" and final_pocket == self.storeA_idx) or (
+            player == "B" and final_pocket == self.storeB_idx
+        )
         # Check for capturing
-        if (player == "A" and 0 <= current_index < self.side_size + 1) or (
-            player == "B"
-            and self.side_size + 2 <= current_index < len(self.pockets) - 1
+        if (player == "A" and 0 <= final_pocket < self.side_size + 1) or (
+            player == "B" and self.side_size + 2 <= final_pocket < len(self.pockets) - 1
         ):
-            if self.pockets[current_index] == 1:
-                opposite_index = 2 * (self.side_size + 1) - current_index
+            if self.pockets[final_pocket] == 1:
+                opposite_index = 2 * (self.side_size + 1) - final_pocket
                 captured_beads = (
                     self.pockets[opposite_index] + 1
                 )  # Include the last bead
                 self.pockets[opposite_index] = 0
-                self.pockets[current_index] = 0
+                self.pockets[final_pocket] = 0
                 store_index = self.storeA_idx if player == "A" else self.storeB_idx
                 self.pockets[store_index] += captured_beads
 

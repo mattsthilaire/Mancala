@@ -11,6 +11,8 @@ numpy = "^1.26.1"
 gymnasium = "^0.29.1"
 torch = "^2.1.0"
 torchrl = "^0.2.1"
+stable-baselines3 = "^2.2.1"
+sb3-contrib = "^2.2.1"
 
 
 [build-system]
