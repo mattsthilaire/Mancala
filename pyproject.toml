@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "mancala"
+version = "0.1.0"
+description = ""
+authors = ["MattStHilaire"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+numpy = "^1.26.1"
+gymnasium = "^0.29.1"
+torch = "^2.1.0"
+torchrl = "^0.2.1"
+stable-baselines3 = "^2.2.1"
+sb3-contrib = "^2.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
